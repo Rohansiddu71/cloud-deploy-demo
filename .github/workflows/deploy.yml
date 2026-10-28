@@ -1,0 +1,33 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Stage 1 - Checkout
+        uses: actions/checkout@v4
+
+      - name: Stage 2 - Build
+        run: echo "Build complete - static site, no compilation needed"
+
+      - name: Stage 3 - Test
+        run: |
+          test -f index.html && echo "PASS: index.html exists"
+          grep -q "<html" index.html && echo "PASS: valid HTML structure"
+
+      - name: Stage 4 - Package
+        run: tar -czf site.tar.gz index.html
+
+      - name: Stage 5 - Deploy
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "index.html"
+          target: "/var/www/html"
